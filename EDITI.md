@@ -77,7 +77,7 @@ CREATE TABLE enrollment (
 
 ## Tarefas
 
-1. Identifique as chaves primárias e estrangeiras necessárias para garantir a integridade referencial. Defina-as corretamente. 
+### 1. Identifique as chaves primárias e estrangeiras necessárias para garantir a integridade referencial. Defina-as corretamente. 
 
 RESPOSTA:
 --Tabela tenant
@@ -103,7 +103,7 @@ institution_id (relaciona-se com a tabela institution).
 person_id (relaciona-se com a tabela person).
 course_id (relaciona-se com a tabela course).
 
-2. Construa índices que consideras essenciais para operações básicas do banco e de consultas possíveis para a estrutura sugerida.
+### 2. Construa índices que consideras essenciais para operações básicas do banco e de consultas possíveis para a estrutura sugerida.
 
 RESPOSTA:
 --Tabela tenant:
@@ -134,10 +134,10 @@ CREATE INDEX idx_enrollment_enrollment_date ON enrollment(enrollment_date);
 CREATE INDEX idx_enrollment_is_deleted ON enrollment(is_deleted);
 
 
-3. Considere que em enollment só pode existir um único person_id por tenant e institution. Mas institution poderá ser nulo. Como garantir a integridade desta regra?
+### 3. Considere que em enollment só pode existir um único person_id por tenant e institution. Mas institution poderá ser nulo. Como garantir a integridade desta regra?
 
 RESPOSTA:Para garantir que um aluno (person_id) só possa ser matriculado uma vez em um curso para um mesmo tenant, com institution podendo ser nulo, utilizamos uma restrição de unicidade. A função COALESCE é usada para tratar institution_id como um valor fixo (como -1) quando for NULL, garantindo que a combinação de tenant_id, institution_id (ou -1 para NULL) e person_id seja única.
-
+```sql
 CREATE TABLE enrollment (
     id SERIAL PRIMARY KEY,                     -- ID único para a matrícula
     tenant_id INTEGER NOT NULL,                -- ID do tenant (obrigatório)
@@ -153,11 +153,11 @@ CREATE TABLE enrollment (
     FOREIGN KEY (course_id) REFERENCES course(id) ON DELETE CASCADE,           -- Relaciona com a tabela course
      CONSTRAINT unique_enrollment UNIQUE (tenant_id, COALESCE(institution_id, -1), person_id), -- Restrição de unicidade
       CHECK (is_deleted IN (FALSE, TRUE))   -- Garante que is_deleted só pode ter valores TRUE ou FALSE
-
-4. Caso eu queira incluir conceitos de exclusão lógica na tabela enrollment. Como eu poderia fazer? Quais as alterações necessárias nas definições anteriores?
+```
+### 4. Caso eu queira incluir conceitos de exclusão lógica na tabela enrollment. Como eu poderia fazer? Quais as alterações necessárias nas definições anteriores?
 
 RESPOSTA:A exclusão lógica é implementada com o campo is_deleted, que indica se o registro foi excluído logicamente (marcado como TRUE), sem ser removido fisicamente. Para garantir a eficiência nas consultas, um índice sobre is_deleted deve ser criado para otimizar filtros de registros não excluídos.
-
+```sql
 CREATE TABLE enrollment (
    id SERIAL PRIMARY KEY,                     -- ID único para a matrícula
     tenant_id INTEGER NOT NULL,                -- ID do tenant (obrigatório)
@@ -174,15 +174,15 @@ CREATE TABLE enrollment (
     CONSTRAINT unique_enrollment UNIQUE (tenant_id, COALESCE(institution_id, -1), person_id), -- Restrição de unicidade
     CHECK (is_deleted IN (FALSE, TRUE))  -- Garante que is_deleted só pode ter valores TRUE ou FALSE
 );
-
+```
 -- Índice para otimizar consultas de exclusão lógica
 CREATE INDEX idx_enrollment_is_deleted ON enrollment(is_deleted);
 
 
-5. Construa uma consulta que retorne o número de matrículas por curso em uma determinada instituição.Filtre por tenant_id e institution_id obrigatoriamente. Filtre também por uma busca qualquer -full search - no campo metadata da tabela person que contém informações adicionais no formato JSONB. Considere aqui também a exclusão lógica e exiba somente registros válidos.
+### 5. Construa uma consulta que retorne o número de matrículas por curso em uma determinada instituição.Filtre por tenant_id e institution_id obrigatoriamente. Filtre também por uma busca qualquer -full search - no campo metadata da tabela person que contém informações adicionais no formato JSONB. Considere aqui também a exclusão lógica e exiba somente registros válidos.
 
 RESPOSTA: A consulta tem como objetivo retornar o número de matrículas por curso em uma instituição específica dentro de um tenant. Ela considera apenas registros válidos, excluindo os alunos que foram deletados logicamente. Além disso, a consulta realiza uma busca no campo metadata (tipo JSONB) da tabela person, permitindo filtrar os dados conforme o conteúdo armazenado nesse campo.
-
+```sql
 SELECT
     c.name AS curso,                         -- Nome do curso
     COUNT(m.id) AS num_matriculas            -- Contagem de matrículas por curso
@@ -201,12 +201,12 @@ GROUP BY
     c.name                                   -- Agrupa os resultados pelo nome do curso
 ORDER BY
     num_matriculas DESC;                    -- Ordena os cursos pela quantidade de matrículas em ordem decrescente
+```
 
-
-6. Construa uma consulta que retorne os alunos de um curso em uma tenant e institution específicos. Esta é uma consulta para atender a requisição que tem por objetivo alimentar uma listagem de alunos em determinado curso. Tenha em mente que poderá retornar um número grande de registros por se tratar de um curso EAD. Use boas práticas. Considere aqui também a exclusão lógica e exiba somente registros válidos.
+### 6. Construa uma consulta que retorne os alunos de um curso em uma tenant e institution específicos. Esta é uma consulta para atender a requisição que tem por objetivo alimentar uma listagem de alunos em determinado curso. Tenha em mente que poderá retornar um número grande de registros por se tratar de um curso EAD. Use boas práticas. Considere aqui também a exclusão lógica e exiba somente registros válidos.
 
 RESPOSTA:Considerando que a instituição e o tenant específicos são fornecidos como parâmetros. Como se trata de um curso EAD, que pode ter muitos registros, a consulta deve ser otimizada e considerar a exclusão lógica, exibindo apenas alunos válidos.
-
+```sql
 SELECT
     p.id AS aluno_id,                     -- ID do aluno
     p.nome AS aluno_nome,                 -- Nome do aluno
@@ -224,13 +224,14 @@ WHERE
     AND p.deleted = FALSE                 -- Exclui registros deletados logicamente
 ORDER BY
     p.nome;                               -- Ordena os resultados por nome do aluno (ou outro critério)
+```
 
-
-7. Suponha que decidimos particionar a tabela enrollment. Desenvolva esta ideia. Reescreva a definição da tabela por algum critério que julgues adequado. Faça todos os ajustes necessários e comente-os.
+### 7. Suponha que decidimos particionar a tabela enrollment. Desenvolva esta ideia. Reescreva a definição da tabela por algum critério que julgues adequado. Faça todos os ajustes necessários e comente-os.
 
 RESPOSTA: O particionamento da tabela enrollment pode aprimorar o desempenho, especialmente em cenários com grandes volumes de dados. Ele pode ser feito com base em critérios lógicos, como tenant_id ou enrollment_date, dependendo das necessidades específicas das consultas.
 
 Exemplo de particionamento por tenant_id:
+```sql
 CREATE TABLE enrollment (
     id SERIAL PRIMARY KEY,                    -- ID da matrícula (chave primária)
     tenant_id INTEGER NOT NULL,               -- ID do tenant (não pode ser nulo)
@@ -241,16 +242,18 @@ CREATE TABLE enrollment (
     status VARCHAR(20),                       -- Status da matrícula
     is_deleted BOOLEAN DEFAULT FALSE          -- Campo para exclusão lógica (não exclui fisicamente)
 ) PARTITION BY LIST (tenant_id);              -- Particionamento por lista, baseado no tenant_id
+```
 
 
 -- Partições para diferentes tenants
+```sql
 CREATE TABLE enrollment_tenant_1 PARTITION OF enrollment FOR VALUES IN (1);
 CREATE TABLE enrollment_tenant_2 PARTITION OF enrollment FOR VALUES IN (2);
-
+```
 Esse particionamento é vantajoso para consultas que focam em um tenant_id específico, pois o banco de dados irá pesquisar apenas nas partições relevantes. 
 Uma alternativa seria particionar a tabela com base na data de matrícula (enrollment_date), caso as consultas se concentrem em dados temporais.
 
-8. Sinta-se a vontade para sugerir e aplicar qualquer ajuste que achares relevante. Comente-os
+### 8. Sinta-se a vontade para sugerir e aplicar qualquer ajuste que achares relevante. Comente-os
 
 
 ## Critérios de avaliação
