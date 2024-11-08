@@ -108,29 +108,41 @@ course_id (relaciona-se com a tabela course).
 RESPOSTA:
 --Tabela tenant:
 Índice na chave primária (id)
+
 CREATE INDEX idx_tenant_id ON tenant(id);
 
 --Tabela person:
 Índices em id, name e no campo metadata (GIN para JSONB):
+
 CREATE INDEX idx_person_id ON person(id);
+
 CREATE INDEX idx_person_name ON person(name);
+
 CREATE INDEX idx_person_metadata ON person USING GIN(metadata);
 
 --Tabela institution:
 Índices em tenant_id e id:
+
 CREATE INDEX idx_institution_tenant_id ON institution(tenant_id);
+
 CREATE INDEX idx_institution_id ON institution(id);
 
 --Tabela course:
 Índices em tenant_id, institution_id e id:
+
 CREATE INDEX idx_course_tenant_institution ON course(tenant_id, institution_id);
+
 CREATE INDEX idx_course_id ON course(id);
 
 --Tabela enrollment:
 Índices compostos em (tenant_id, institution_id, person_id), status, enrollment_date, e is_deleted:
+
 CREATE INDEX idx_enrollment_tenant_institution_person ON enrollment(tenant_id, institution_id, person_id);
+
 CREATE INDEX idx_enrollment_status ON enrollment(status);
+
 CREATE INDEX idx_enrollment_enrollment_date ON enrollment(enrollment_date);
+
 CREATE INDEX idx_enrollment_is_deleted ON enrollment(is_deleted);
 
 
