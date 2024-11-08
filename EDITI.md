@@ -80,22 +80,22 @@ CREATE TABLE enrollment (
 ### 1. Identifique as chaves primárias e estrangeiras necessárias para garantir a integridade referencial. Defina-as corretamente. 
 
 RESPOSTA:
---Tabela tenant
+### Tabela tenant
 Chave primária: id (do tipo SERIAL).
 
---Tabela person
+### Tabela person
 Chave primária: id (do tipo SERIAL).
 
---Tabela institution
+### Tabela institution
 Chave primária: id (do tipo SERIAL).
 Chave estrangeira: tenant_id (relaciona-se com a tabela tenant).
 
---Tabela course
+### Tabela course
 Chave primária: id (do tipo SERIAL).
 Chave estrangeira: tenant_id (relaciona-se com a tabela tenant).
 Chave estrangeira: institution_id (relaciona-se com a tabela institution).
 
---Tabela enrollment
+### Tabela enrollment
 Chave primária: id (do tipo SERIAL).
 Chaves estrangeiras:
 tenant_id (relaciona-se com a tabela tenant).
@@ -106,12 +106,12 @@ course_id (relaciona-se com a tabela course).
 ### 2. Construa índices que consideras essenciais para operações básicas do banco e de consultas possíveis para a estrutura sugerida.
 
 RESPOSTA:
---Tabela tenant:
+### Tabela tenant:
 Índice na chave primária (id)
 
 CREATE INDEX idx_tenant_id ON tenant(id);
 
---Tabela person:
+### Tabela person:
 Índices em id, name e no campo metadata (GIN para JSONB):
 
 CREATE INDEX idx_person_id ON person(id);
@@ -120,21 +120,21 @@ CREATE INDEX idx_person_name ON person(name);
 
 CREATE INDEX idx_person_metadata ON person USING GIN(metadata);
 
---Tabela institution:
+### Tabela institution:
 Índices em tenant_id e id:
 
 CREATE INDEX idx_institution_tenant_id ON institution(tenant_id);
 
 CREATE INDEX idx_institution_id ON institution(id);
 
---Tabela course:
+### Tabela course:
 Índices em tenant_id, institution_id e id:
 
 CREATE INDEX idx_course_tenant_institution ON course(tenant_id, institution_id);
 
 CREATE INDEX idx_course_id ON course(id);
 
---Tabela enrollment:
+### Tabela enrollment:
 Índices compostos em (tenant_id, institution_id, person_id), status, enrollment_date, e is_deleted:
 
 CREATE INDEX idx_enrollment_tenant_institution_person ON enrollment(tenant_id, institution_id, person_id);
