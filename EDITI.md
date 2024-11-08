@@ -187,7 +187,7 @@ CREATE TABLE enrollment (
     CHECK (is_deleted IN (FALSE, TRUE))  -- Garante que is_deleted só pode ter valores TRUE ou FALSE
 );
 ```
--- Índice para otimizar consultas de exclusão lógica
+Índice para otimizar consultas de exclusão lógica
 CREATE INDEX idx_enrollment_is_deleted ON enrollment(is_deleted);
 
 
@@ -257,7 +257,7 @@ CREATE TABLE enrollment (
 ```
 
 
--- Partições para diferentes tenants
+Partições para diferentes tenants
 ```sql
 CREATE TABLE enrollment_tenant_1 PARTITION OF enrollment FOR VALUES IN (1);
 CREATE TABLE enrollment_tenant_2 PARTITION OF enrollment FOR VALUES IN (2);
